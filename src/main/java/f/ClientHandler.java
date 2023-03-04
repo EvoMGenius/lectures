@@ -43,7 +43,7 @@ public class ClientHandler {
 
     private void readMessages() throws IOException {
         while (true) {
-            String s = in.readLine();
+            String s = in.readUTF();
             System.out.println("From " + name + ": " + s);
             if (s.equals("/end")) {
                 return;
