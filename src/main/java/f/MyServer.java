@@ -12,14 +12,20 @@ public class MyServer {
 
     private List<ClientHandler> clients;
 
+    private AuthService authService;
+
+    public AuthService getAuthService() {
+        return authService;
+    }
 
     public MyServer() {
-        try(ServerSocket server = new ServerSocket(PORT)){
+        try (ServerSocket server = new ServerSocket(PORT)) {
+            authService = new InMemoryAuthServiceImpl();
             clients = new ArrayList<>();
-            while (true){
+            while (true) {
                 System.out.println("Сервер ожидает подключения");
                 Socket socket = server.accept();
-                System.out.println("Клиент подключился: "+socket.getInetAddress());
+                System.out.println("Клиент подключился: " + socket.getInetAddress());
                 new ClientHandler(this, socket);
             }
         } catch (IOException e) {
@@ -28,17 +34,26 @@ public class MyServer {
         }
     }
 
-    public synchronized void broadcastMsg(String msg){
+    public synchronized boolean isNickBusy(String nickname) {
+        for (ClientHandler client : clients) {
+            if (client.getName().equals(nickname)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public synchronized void broadcastMsg(String msg) {
         for (ClientHandler client : clients) {
             client.sendMsg(msg);
         }
     }
 
-    public synchronized void unsubscribe(ClientHandler client){
+    public synchronized void unsubscribe(ClientHandler client) {
         clients.remove(client);
     }
 
-    public synchronized void subscribe(ClientHandler client){
+    public synchronized void subscribe(ClientHandler client) {
         clients.add(client);
     }
 }

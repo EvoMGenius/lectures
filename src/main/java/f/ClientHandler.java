@@ -24,11 +24,10 @@ public class ClientHandler {
             this.socket = socket;
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
-            this.name = socket.getInetAddress().toString();
 
             new Thread(() -> {
                 try {
-                    myServer.subscribe(this);
+                    authentication();
                     readMessages();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -58,6 +57,29 @@ public class ClientHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void authentication() throws IOException {
+        AuthService authService = myServer.getAuthService();
+        while (true) {
+            String s = in.readUTF();
+            if (s.startsWith("/auth")) {
+                String[] parts = s.split("\\s");
+                String login = parts[1];
+                String password = parts[2];
+                if (authService.authenticate(login, password)) {
+                    String nickname = authService.getNickname(login);
+                    if (myServer.isNickBusy(nickname)) {
+                        sendMsg("Данный ник занят\n");
+                        continue;
+                    }
+                    this.name = nickname;
+                    myServer.subscribe(this);
+                    return;
+                }
+            }
+        }
+
     }
 
     private void closeConnection() {
